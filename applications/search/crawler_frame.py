@@ -4,7 +4,7 @@ from spacetime.client.IApplication import IApplication
 from spacetime.client.declarations import Producer, GetterSetter, Getter
 #from lxml import html,etree
 from BeautifulSoup import BeautifulSoup
-from urlparse import urljoin
+from urlparse import urljoin, urlparse
 import re, os
 from time import time
 from uuid import uuid4
@@ -15,6 +15,7 @@ from uuid import uuid4
 logger = logging.getLogger(__name__)
 LOG_HEADER = "[CRAWLER]"
 visited = set()
+subDomains = dict()
 
 @Producer(SdkuoJermainzSampath1Link)
 @GetterSetter(OneSdkuoJermainzSampath1UnProcessedLink)
@@ -122,6 +123,7 @@ def is_valid(url):
         if re.match(r"^.*/[^/]{300,}$", url):
             return False
 
+        #check content of url against other data types
         valid = ".ics.uci.edu" in parsed.hostname \
             and not re.match(".*\.(css|js|bmp|gif|jpe?g|ico" + "|png|tiff?|mid|mp2|mp3|mp4"\
              + "|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
@@ -130,6 +132,16 @@ def is_valid(url):
              + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower())
 
         if valid:
+            url = urlparse(url)
+            subdomain = url.hostname.split('.')[0]
+            if subdomain not in subDomains:
+                subDomains[subdomain] = 1
+            else:
+                subDomains[subdomain] += 1
+            file = open("output.txt", "w")
+            for sub, num in subDomains.iteritems():
+                file.write("{} - {}\n".format(sub, num))
+            file.close()
             print(url)
     
         return valid
