@@ -108,8 +108,10 @@ def is_valid(url):
     parsed = urlparse(url)
     if parsed.scheme not in set(["http", "https"]):
         return False
+
+    print(url)
     try:
-        if re.match(r"^.*(calendar|\?)", url):
+        if re.match(r"^.*(calendar|\?|mailman/listinfo)", url):
             return False
   
         if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", url):
@@ -129,8 +131,6 @@ def is_valid(url):
              + "|thmx|mso|arff|rtf|jar|csv"\
              + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower())
 
-        if valid:
-            print(url)
     
         return valid
             
