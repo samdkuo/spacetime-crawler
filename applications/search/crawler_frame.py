@@ -8,6 +8,7 @@ from urlparse import urljoin, urlparse
 import re, os
 from time import time
 from uuid import uuid4
+import operator
 
 from urlparse import urlparse, parse_qs
 from uuid import uuid4
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 LOG_HEADER = "[CRAWLER]"
 visited = set()
 subDomains = dict()
+mostLinks = dict()
 
 @Producer(SdkuoJermainzSampath1Link)
 @GetterSetter(OneSdkuoJermainzSampath1UnProcessedLink)
@@ -89,7 +91,9 @@ def extract_next_links(rawDataObj):
             if(not link.startswith("http://") or not link.startswith("https://")):
                 link = urljoin(url, link)
             outputLinks.append(str(link))
-    
+
+        mostLinks[url] = len(outputLinks)
+
     except Exception as error:
         print("caught error: " + repr(error))
 
@@ -132,13 +136,18 @@ def is_valid(url):
              + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower())
 
         if valid:
-            url = urlparse(url)
-            subdomain = url.hostname.split('.')[0]
+            suburl = urlparse(url)
+            subdomain = suburl.hostname
             if subdomain not in subDomains:
                 subDomains[subdomain] = 1
             else:
                 subDomains[subdomain] += 1
+
             file = open("output.txt", "w")
+            maxUrl = max(mostLinks.iteritems(), key=operator.itemgetter(1))
+
+            file.write("Most outgoing links: {}\n{}\n".format(maxUrl[1], maxUrl[0]))
+            file.write("Url count:\n")
             for sub, num in subDomains.iteritems():
                 file.write("{} - {}\n".format(sub, num))
             file.close()
