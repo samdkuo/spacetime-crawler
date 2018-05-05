@@ -4,10 +4,11 @@ from spacetime.client.IApplication import IApplication
 from spacetime.client.declarations import Producer, GetterSetter, Getter
 #from lxml import html,etree
 from BeautifulSoup import BeautifulSoup
-from urlparse import urljoin
+from urlparse import urljoin, urlparse
 import re, os
 from time import time
 from uuid import uuid4
+import operator
 
 from urlparse import urlparse, parse_qs
 from uuid import uuid4
@@ -15,6 +16,8 @@ from uuid import uuid4
 logger = logging.getLogger(__name__)
 LOG_HEADER = "[CRAWLER]"
 visited = set()
+subDomains = dict()
+mostLinks = dict()
 
 @Producer(SdkuoJermainzSampath1Link)
 @GetterSetter(OneSdkuoJermainzSampath1UnProcessedLink)
@@ -88,7 +91,9 @@ def extract_next_links(rawDataObj):
             if(not link.startswith("http://") or not link.startswith("https://")):
                 link = urljoin(url, link)
             outputLinks.append(str(link))
-    
+
+        mostLinks[url] = len(outputLinks)
+
     except Exception as error:
         print("caught error: " + repr(error))
 
@@ -124,6 +129,7 @@ def is_valid(url):
         if re.match(r"^.*/[^/]{300,}$", url):
             return False
 
+        #check content of url against other data types
         valid = ".ics.uci.edu" in parsed.hostname \
             and not re.match(".*\.(css|js|bmp|gif|jpe?g|ico" + "|png|tiff?|mid|mp2|mp3|mp4"\
              + "|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
@@ -131,6 +137,26 @@ def is_valid(url):
              + "|thmx|mso|arff|rtf|jar|csv"\
              + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower())
 
+<<<<<<< HEAD
+=======
+        if valid:
+            suburl = urlparse(url)
+            subdomain = suburl.hostname
+            if subdomain not in subDomains:
+                subDomains[subdomain] = 1
+            else:
+                subDomains[subdomain] += 1
+
+            file = open("output.txt", "w")
+            maxUrl = max(mostLinks.iteritems(), key=operator.itemgetter(1))
+
+            file.write("Most outgoing links: {}\n{}\n".format(maxUrl[1], maxUrl[0]))
+            file.write("Url count:\n")
+            for sub, num in subDomains.iteritems():
+                file.write("{} - {}\n".format(sub, num))
+            file.close()
+            print(url)
+>>>>>>> e4f779c8f361c42ad8a8f78822ad8302d6559ba2
     
         return valid
             
